@@ -21,6 +21,8 @@ from db import (db_session, InvalidPasswordLength, Journalist, Reply, Source,
                 Submission)
 import journalist
 
+# Smugly seed the RNG for deterministic testing
+random.seed('¯\_(ツ)_/¯')
 
 class TestJournalistApp(TestCase):
 
