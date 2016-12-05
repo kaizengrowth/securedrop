@@ -78,17 +78,16 @@ def get_bulk_archive(items_selected, zip_directory=''):
     with zipfile.ZipFile(zip_file, 'w') as zip:
         for source in sources:
             submissions = [s for s in items_selected if s.source.journalist_designation == source]
-            i = 1
-            for submission in submissions:
-                filename = path(submission.source.filesystem_id, submission.filename)
+            for index, submission in enumerate(submissions, start=1):
+                filename = path(submission.source.filesystem_id,
+                                submission.filename)
                 verify(filename)
                 zip.write(filename, arcname=os.path.join(
                     zip_directory,
                     source,
-                    "%s_%s" % (i, submission.source.last_updated.date()),
+                    "%s_%s" % (index, submission.source.last_updated.date()),
                     os.path.basename(filename)
                 ))
-                i += 1
     return zip_file
 
 
