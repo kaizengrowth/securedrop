@@ -665,7 +665,7 @@ def download(zip_basename, submissions):
 
     :param str zip_basename: The basename of the zipfile download.
 
-    :param list submissions: A list of :class:`db.Submission`s to 
+    :param list submissions: A list of :class:`db.Submission`s to
                              include in the zipfile.
     """
     # Mark the submissions that are about to be downloaded as such
@@ -701,7 +701,7 @@ def write_pidfile():
         fp.write(pid)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     write_pidfile()
     debug = getattr(config, 'env', 'prod') != 'prod'
     app.run(debug=debug, host='0.0.0.0', port=8081)
