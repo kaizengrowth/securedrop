@@ -27,25 +27,6 @@ class TestJournalist(TestCase):
     def create_app(self):
         return journalist.app
 
-    def add_source_and_submissions(self):
-        sid = crypto_util.hash_codename(crypto_util.genrandomid())
-        codename = crypto_util.display_id()
-        crypto_util.genkeypair(sid, codename)
-        source = Source(sid, codename)
-        db_session.add(source)
-        db_session.commit()
-        files = ['1-abc1-msg.gpg', '2-abc2-msg.gpg']
-        filenames = common.setup_test_docs(sid, files)
-        return source, files
-
-    def add_source_and_replies(self):
-        source, files = self.add_source_and_submissions()
-        files = ['1-def-reply.gpg', '2-def-reply.gpg']
-        filenames = common.setup_test_replies(source.filesystem_id,
-                                              self.user.id,
-                                              files)
-        return source, files
-
     def setUp(self):
         common.shared_setup()
 
@@ -443,7 +424,7 @@ class TestJournalist(TestCase):
         """Verify that when a source is deleted, the submissions that
         correspond to them are also deleted."""
 
-        source, files = self.add_source_and_submissions()
+        source, files = common.add_source_and_submissions()
 
         journalist.delete_collection(source.filesystem_id)
 
@@ -459,7 +440,7 @@ class TestJournalist(TestCase):
         """Verify that when a source is deleted, the replies that
         correspond to them are also deleted."""
 
-        source, files = self.add_source_and_replies()
+        source, files = common.add_source_and_replies(self.user)
 
         journalist.delete_collection(source.filesystem_id)
 
@@ -475,7 +456,7 @@ class TestJournalist(TestCase):
         """Verify that when a source is deleted, the PGP key that corresponds
         to them is also deleted."""
 
-        source, files = self.add_source_and_submissions()
+        source, files = common.add_source_and_submissions()
 
         # Source key exists
         source_key = crypto_util.getkey(source.filesystem_id)
@@ -491,7 +472,7 @@ class TestJournalist(TestCase):
         """Verify that when a source is deleted, the encrypted documents that
         exist on disk is also deleted."""
 
-        source, files = self.add_source_and_submissions()
+        source, files = common.add_source_and_submissions()
 
         # Encrypted documents exists
         dir_source_docs = os.path.join(config.STORE_DIR, source.filesystem_id)

@@ -20,6 +20,27 @@ import crypto_util
 TEST_WORKER_PIDFILE = "/tmp/securedrop_test_worker.pid"
 
 
+
+def add_source_and_submissions():
+    sid = crypto_util.hash_codename(crypto_util.genrandomid())
+    codename = crypto_util.display_id()
+    crypto_util.genkeypair(sid, codename)
+    source = Source(sid, codename)
+    db_session.add(source)
+    db_session.commit()
+    files = ['1-abc1-msg.gpg', '2-abc2-msg.gpg']
+    filenames = setup_test_docs(sid, files)
+    return source, files
+
+
+def add_source_and_replies(user):
+    source, files = add_source_and_submissions()
+    files = ['1-def-reply.gpg', '2-def-reply.gpg']
+    filenames = setup_test_replies(source.filesystem_id,
+                                   user.id, files)
+    return source, files
+
+
 def clean_root():
     shutil.rmtree(config.SECUREDROP_DATA_ROOT)
 

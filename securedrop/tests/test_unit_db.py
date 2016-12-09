@@ -9,8 +9,11 @@ import mock
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 import journalist
+import crypto_util
+import common
 os.environ['SECUREDROP_ENV'] = 'test'
-from db import db_session, Journalist, get_one_or_else
+from db import (db_session, Journalist, Submission, Source, Reply,
+                get_one_or_else)
 
 import logging
 logging.basicConfig()
@@ -53,6 +56,41 @@ class TestDatabase(TestCase):
         query = Journalist.query.filter(Journalist.username == "alice")
         selected_journos = get_one_or_else(query, logger, mock)
         mock.assert_called_with(404)
+
+    # Check __repr__ do not throw exceptions
+
+    def test_submission_string_representation(self):
+        sid = crypto_util.hash_codename(crypto_util.genrandomid())
+        codename = crypto_util.display_id()
+        crypto_util.genkeypair(sid, codename)
+        source = Source(sid, codename)
+        db_session.add(source)
+        db_session.commit()
+        files = ['1-abc1-msg.gpg', '2-abc2-msg.gpg']
+        filenames = common.setup_test_docs(sid, files)
+        test_submission = Submission.query.filter(Submission.filename == files[0])
+        test_submission.__repr__()
+
+    def test_reply_string_representation(self):
+        test_journalist = Journalist(username="foo",
+                                     password="bar")
+        db_session.add(test_journalist)
+        db_session.commit()
+        source, files = common.add_source_and_replies(test_journalist)
+        test_reply = Reply.query.filter(Reply.filename == '1-def-reply.gpg')
+        test_reply.__repr__()
+
+    def test_journalist_string_representation(self):
+        test_journalist = Journalist(username="foo",
+                                     password="bar")
+        test_journalist.__repr__()
+
+    def test_source_string_representation(self):
+        sid = crypto_util.hash_codename(crypto_util.genrandomid())
+        codename = crypto_util.display_id()
+        crypto_util.genkeypair(sid, codename)
+        test_source = Source(sid, codename)
+        test_source.__repr__()
 
 
 if __name__ == "__main__":
