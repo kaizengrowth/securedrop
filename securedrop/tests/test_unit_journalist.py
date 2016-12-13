@@ -388,7 +388,7 @@ class TestJournalistApp(TestCase):
             resp = self.client.get(admin_url)
             self.assertStatus(resp, 302)
 
-    def test_admin_page_restrction_http_posts(self):
+    def test_admin_page_restriction_http_posts(self):
         admin_urls = [url_for('admin_reset_two_factor_totp'),
             url_for('admin_reset_two_factor_hotp'),
             url_for('admin_add_user', user_id=self.user.id),

@@ -106,13 +106,13 @@ class TestJournalistLogin(unittest.TestCase):
 
     @patch('db.Journalist._scrypt_hash')
     @patch('db.Journalist.valid_password', return_value=True)
-    def test_login_calls_scrypt(self, mock_scrypt_hash, mock_valid_password):
+    def test_valid_login_calls_scrypt(self, mock_scrypt_hash, mock_valid_password):
         Journalist.login(self.user.username, self.user_pw, 'mocked')
         self.assertTrue(mock_scrypt_hash.called,
                 "Failed to call _scrypt_hash for password w/ valid length")
 
     @patch('db.Journalist._scrypt_hash')
-    def test_invalid_login_doesnt_call_scrypt(self, mock_scrypt_hash):
+    def test_login_with_invalid_password_doesnt_call_scrypt(self, mock_scrypt_hash):
         invalid_pw = 'a'*(Journalist.MAX_PASSWORD_LEN + 1)
         with self.assertRaises(InvalidPasswordLength):
             Journalist.login(self.user.username, invalid_pw, 'mocked')

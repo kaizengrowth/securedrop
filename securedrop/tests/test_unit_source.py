@@ -130,14 +130,14 @@ class TestSourceApp(TestCase):
         codename = self._new_codename()
         with self.client as c:
             resp = c.post('/login', data=dict(codename=codename),
-                        follow_redirects=True)
+                          follow_redirects=True)
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Submit documents and messages", resp.data)
             self.assertTrue(session['logged_in'])
             resp = c.get('/logout', follow_redirects=True)
 
         with self.client as c:
-            resp = self.client.post('/login', data=dict(codename='invalid'),
+            resp = c.post('/login', data=dict(codename='invalid'),
                                   follow_redirects=True)
             self.assertEqual(resp.status_code, 200)
             self.assertIn('Sorry, that is not a recognized codename.', resp.data)
@@ -301,15 +301,14 @@ class TestSourceApp(TestCase):
         """Attempting to login with an overly long codename should result in
         an error, and scrypt should not be called to avoid DoS."""
         overly_long_codename = 'a' * (Source.MAX_CODENAME_LEN + 1)
-        with self.client as client:
-            resp = client.post(
-                    '/login',
-                    data=dict(codename=overly_long_codename),
-                    follow_redirects=True)
+        with self.client as c:
+            resp = c.post('/login', data=dict(codename=overly_long_codename),
+                          follow_redirects=True)
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Sorry, that is not a recognized codename.", resp.data)
             self.assertFalse(mock_hash_codename.called,
-                    "Called hash_codename for codename w/ invalid length")
+                             "Called hash_codename for codename w/ invalid "
+                             "length")
 
 
 if __name__ == "__main__":
