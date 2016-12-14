@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
-import gnupg
 import mock
 import os
 import shutil
 import subprocess
 import time
+
+import gnupg
 
 # Set environment variable so config.py uses a test environment
 os.environ['SECUREDROP_ENV'] = 'test'
