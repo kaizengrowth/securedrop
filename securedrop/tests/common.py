@@ -42,11 +42,11 @@ class TestJournalist:
         return TestJournalist.init_journalist(True)
 
     @staticmethod
-    def mock_verify_token(self):
+    def mock_verify_token(app):
         patcher = mock.patch('db.Journalist.verify_token')
-        self.addCleanup(patcher.stop)
-        self.mock_journalist_verify_token = patcher.start()
-        self.mock_journalist_verify_token.return_value = True
+        app.addCleanup(patcher.stop)
+        app.mock_journalist_verify_token = patcher.start()
+        app.mock_journalist_verify_token.return_value = True
 
 
 class TestSource:
