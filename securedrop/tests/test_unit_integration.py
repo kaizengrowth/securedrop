@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from bs4 import BeautifulSoup
 from cStringIO import StringIO
-from flask import session, g, escape
-import gnupg
 import gzip
 import mock
 import os
@@ -15,10 +12,13 @@ import time
 import unittest
 import zipfile
 
-# Set environment variable so config.py uses a test environment
-os.environ['SECUREDROP_ENV'] = 'test'
+from bs4 import BeautifulSoup
+from flask import session, g, escape
+import gnupg
 
 from common import Async, SetUp, TearDown
+# Set environment variable so config.py uses a test environment
+os.environ['SECUREDROP_ENV'] = 'test'
 import config
 import crypto_util
 from db import db_session, Journalist

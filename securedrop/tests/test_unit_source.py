@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from bs4 import BeautifulSoup
 from cStringIO import StringIO
-from flask import session, escape
-from flask_testing import TestCase
 from mock import patch, ANY
 import os
 import re
 import unittest
 
-# Set environment variable so config.py uses a test environment
-os.environ['SECUREDROP_ENV'] = 'test'
+from bs4 import BeautifulSoup
+from flask import session, escape
+from flask_testing import TestCase
 
 from common import SetUp, TearDown, TestSource
 from db import Source

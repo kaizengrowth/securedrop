@@ -5,11 +5,10 @@ import os
 import unittest
 import zipfile
 
+from common import SetUp, TearDown, TestSource, TestSubmission
+import crypto_util
 # Set environment variable so config.py uses a test environment
 os.environ['SECUREDROP_ENV'] = 'test'
-
-import crypto_util
-from common import SetUp, TearDown, TestSource, TestSubmission
 import config
 from db import db_session, Source
 import store

@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 
 from cStringIO import StringIO
-from flask import url_for, escape
-from flask_testing import TestCase
 import os
 import random
 import time
 import unittest
 import zipfile
 
+from flask import url_for, escape
+from flask_testing import TestCase
+
 # Set environment variable so config.py uses a test environment
 os.environ['SECUREDROP_ENV'] = 'test'
-
 import config
 from common import (Async, SetUp, TearDown, TestJournalist, TestReply,
                     TestSource, TestSubmission)

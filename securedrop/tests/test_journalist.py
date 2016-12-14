@@ -5,9 +5,6 @@ import os
 from mock import patch, ANY, MagicMock
 import unittest
 
-# Set environment variable so config.py uses a test environment
-os.environ['SECUREDROP_ENV'] = 'test'
-
 from common import SetUp, TearDown, TestJournalist
 from db import db_session, InvalidPasswordLength, Journalist
 import journalist

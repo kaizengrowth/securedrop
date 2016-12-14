@@ -1,33 +1,30 @@
 # -*- coding: utf-8 -*-
 
-import gnupg
-import os
+from datetime import datetime
+import mock
 from multiprocessing import Process
-from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.firefox import firefox_binary
+import os
 import shutil
+import signal
 import socket
 import sys
+import time
+import traceback
 import unittest
 import urllib2
 
+import gnupg
+from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.firefox import firefox_binary
 
 # Set environment variable so config.py uses a test environment
 os.environ['SECUREDROP_ENV'] = 'test'
-
-import db
 import config
-import source
+import db
 import journalist
+import source
 from tests.common import SetUp, TearDown
-import urllib2
-
-import signal
-import traceback
-from datetime import datetime
-import time
-import mock
 
 
 class FunctionalTest():
