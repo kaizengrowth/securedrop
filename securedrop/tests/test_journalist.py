@@ -85,7 +85,7 @@ class TestJournalistApp(unittest.TestCase):
         # break other tests
         reload(journalist)
 
-seshy = None
+
 class TestJournalistLogin(unittest.TestCase):
 
     def setUp(self):
