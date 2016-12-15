@@ -9,7 +9,7 @@ import os
 os.environ['SECUREDROP_ENV'] = 'test'
 import config
 import crypto_util
-import db
+import db_helper
 import store
 
 
