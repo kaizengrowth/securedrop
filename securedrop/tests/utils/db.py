@@ -28,7 +28,7 @@ class TestJournalist(db.Journalist):
         db.db_session.add(self)
         db.db_session.commit()
 
-    def reply(journalist, source, num_replies):
+    def reply(self, source, num_replies):
         """Generates and submits *num_replies* replies to the *source*.
 
         :param db.Source source: The source to send the replies to.
@@ -71,7 +71,7 @@ class TestSource(db.Source):
         filesystem_id = crypto_util.hash_codename(self.codename)
         journalist_filename = crypto_util.display_id()
         super(TestSource, self).__init__(filesystem_id, journalist_filename)
-        db.db_session.add(source)
+        db.db_session.add(self)
         db.db_session.commit()
         # Create the directory to store their submissions and replies
         os.mkdir(store.path(self.filesystem_id))

@@ -43,6 +43,5 @@ def wait_for_assertion(assertion_expression, timeout=5):
             return assertion_expression()
         except AssertionError:
             time.sleep(0.1)
-            pass
     # one more try, which will raise any errors if they are outstanding
     return assertion_expression()
