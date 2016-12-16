@@ -10,21 +10,21 @@ from bs4 import BeautifulSoup
 from flask import session, escape
 from flask_testing import TestCase
 
-from common import SetUp, TearDown, TestSource
 from db import Source
 import source
+import utils
 
 
-class TestSourceApp(TestCase):
+class TestSourceApppp(TestCase):
 
     def create_app(self):
         return source.app
 
     def setUp(self):
-        SetUp.setup()
+        utils.env.setup()
 
     def tearDown(self):
-        TearDown.teardown()
+        utils.env.teardown()
 
     def test_index(self):
         """Test that the landing page loads and looks how we expect"""
@@ -107,7 +107,7 @@ class TestSourceApp(TestCase):
             self.assertIn("Submit documents and messages", resp.data)
 
     def _new_codename(self):
-        return TestSource.new_codename(self.client, session)
+        return utils.db_helper.new_codename(self.client, session)
 
     def test_lookup(self):
         """Test various elements on the /lookup page."""

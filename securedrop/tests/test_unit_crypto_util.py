@@ -8,8 +8,8 @@ import unittest
 os.environ['SECUREDROP_ENV'] = 'test'
 
 import config
-from common import SetUp, TearDown
 import crypto_util
+import utils
 
 
 class TestCryptoUtil(unittest.TestCase):
@@ -17,10 +17,10 @@ class TestCryptoUtil(unittest.TestCase):
     """The set of tests for crypto_util.py."""
 
     def setUp(self):
-        SetUp.setup()
+        utils.env.setup()
 
     def tearDown(self):
-        TearDown.teardown()
+        utils.env.teardown()
 
     def test_clean(self):
         with self.assertRaises(crypto_util.CryptoException):

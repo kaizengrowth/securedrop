@@ -5,9 +5,9 @@ import os
 from mock import patch, ANY, MagicMock
 import unittest
 
-from common import SetUp, TearDown, TestJournalist
 from db import db_session, InvalidPasswordLength, Journalist
 import journalist
+import utils
 
 class TestJournalistApp(unittest.TestCase):
 
@@ -86,15 +86,15 @@ class TestJournalistApp(unittest.TestCase):
 class TestJournalistLogin(unittest.TestCase):
 
     def setUp(self):
-        SetUp.setup()
+        utils.env.setup()
 
         # Patch the two-factor verification so it always succeeds
-        TestJournalist.mock_verify_token(self)
+        utils.db_helper.mock_verify_token(self)
 
-        self.user, self.user_pw = TestJournalist.init_journalist()
+        self.user, self.user_pw = utils.db_helper.init_journalist()
 
     def tearDown(self):
-        TearDown.teardown()
+        utils.env.teardown()
         # TODO: figure out why this is necessary here, but unnecessary in all
         # of the tests in `tests/test_unit_*.py`. Without this, the session
         # continues to return values even if the underlying database is deleted

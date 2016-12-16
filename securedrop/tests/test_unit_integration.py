@@ -16,7 +16,6 @@ from bs4 import BeautifulSoup
 from flask import session, g, escape
 import gnupg
 
-from common import Async, SetUp, TearDown
 # Set environment variable so config.py uses a test environment
 os.environ['SECUREDROP_ENV'] = 'test'
 import config
@@ -25,6 +24,7 @@ from db import db_session, Journalist
 import journalist
 import source
 import store
+import utils
 
 
 class TestIntegration(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestIntegration(unittest.TestCase):
             follow_redirects=True)
 
     def setUp(self):
-        SetUp.setup()
+        utils.env.setup()
 
         self.source_app = source.app.test_client()
         self.journalist_app = journalist.app.test_client()
@@ -60,7 +60,7 @@ class TestIntegration(unittest.TestCase):
         self._login_user()
 
     def tearDown(self):
-        TearDown.teardown()
+        utils.env.teardown()
 
     def test_submit_message(self):
         """When a source creates an account, test that a new entry appears in the journalist interface"""
@@ -142,7 +142,7 @@ class TestIntegration(unittest.TestCase):
         # the file should be deleted from the filesystem
         # since file deletion is handled by a polling worker, this test needs
         # to wait for the worker to get the job and execute it
-        Async.wait_for_assertion(
+        utils.async.wait_for_assertion(
             lambda: self.assertFalse(os.path.exists(store.path(sid, doc_name)))
         )
 
@@ -230,7 +230,7 @@ class TestIntegration(unittest.TestCase):
         # the file should be deleted from the filesystem
         # since file deletion is handled by a polling worker, this test needs
         # to wait for the worker to get the job and execute it
-        Async.wait_for_assertion(
+        utils.async.wait_for_assertion(
             lambda: self.assertFalse(os.path.exists(store.path(sid, doc_name)))
         )
 
@@ -335,7 +335,7 @@ class TestIntegration(unittest.TestCase):
             source_app.get('/logout')
 
         # Block up to 15s for the reply keypair, so we can test sending a reply
-        Async.wait_for_assertion(
+        utils.async.wait_for_assertion(
             lambda: self.assertNotEqual(crypto_util.getkey(sid), None), 15)
 
         # Create 2 replies to test deleting on journalist and source interface
@@ -405,7 +405,7 @@ class TestIntegration(unittest.TestCase):
                 self.assertIn("Reply deleted", resp.data)
 
                 # Make sure the reply is deleted from the filesystem
-                Async.wait_for_assertion(
+                utils.async.wait_for_assertion(
                     lambda: self.assertFalse(os.path.exists(
                         store.path(sid, msgid))))
 
@@ -441,7 +441,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("No documents have been submitted!", resp.data)
 
         # Make sure the collection is deleted from the filesystem
-        Async.wait_for_assertion(
+        utils.async.wait_for_assertion(
             lambda: self.assertFalse(os.path.exists(store.path(sid)))
         )
 
@@ -472,7 +472,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("%s collections deleted" % (num_sources,), resp.data)
 
         # Make sure the collections are deleted from the filesystem
-        Async.wait_for_assertion(lambda: self.assertFalse(
+        utils.async.wait_for_assertion(lambda: self.assertFalse(
             any([os.path.exists(store.path(sid)) for sid in checkbox_values])))
 
     def test_filenames(self):
@@ -613,7 +613,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("Submission deleted.", resp.data)
 
         # Make sure the files were deleted from the filesystem
-        Async.wait_for_assertion(lambda: self.assertFalse(
+        utils.async.wait_for_assertion(lambda: self.assertFalse(
             any([os.path.exists(store.path(sid, doc_name)) for doc_name in checkbox_values])))
 
 

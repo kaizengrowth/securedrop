@@ -5,13 +5,13 @@ import os
 import unittest
 import zipfile
 
-from common import SetUp, TearDown, TestSource, TestSubmission
 import crypto_util
 # Set environment variable so config.py uses a test environment
 os.environ['SECUREDROP_ENV'] = 'test'
 import config
 from db import db_session, Source
 import store
+import utils
 
 
 class TestStore(unittest.TestCase):
@@ -19,10 +19,10 @@ class TestStore(unittest.TestCase):
     """The set of tests for store.py."""
 
     def setUp(self):
-        SetUp.setup()
+        utils.env.setup()
 
     def tearDown(self):
-        TearDown.teardown()
+        utils.env.teardown()
         db_session.remove()
 
     def test_verify(self):
@@ -32,8 +32,8 @@ class TestStore(unittest.TestCase):
             store.verify(config.STORE_DIR + "_backup")
 
     def test_get_zip(self):
-        source, _ = TestSource.init_source()
-        submissions = TestSubmission.submit(source, 2)
+        source, _ = utils.db_helper.init_source()
+        submissions = utils.db_helper.submit(source, 2)
         filenames = [os.path.join(config.STORE_DIR,
                                   source.filesystem_id,
                                   submission.filename)
@@ -48,9 +48,9 @@ class TestStore(unittest.TestCase):
             self.assertEquals(zipped_file_content, actual_file_content)
 
     def test_rename_valid_submission(self):
-        source, _ = TestSource.init_source()
+        source, _ = utils.db_helper.init_source()
         old_journalist_filename = source.journalist_filename
-        old_filename = TestSubmission.submit(source, 1)[0].filename
+        old_filename = utils.db_helper.submit(source, 1)[0].filename
         new_journalist_filename = 'nestor_makhno'
         expected_filename = old_filename.replace(old_journalist_filename,
                                                  new_journalist_filename)

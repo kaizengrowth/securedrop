@@ -24,7 +24,7 @@ import config
 import db
 import journalist
 import source
-from tests.common import SetUp, TearDown
+import tests.utils
 
 
 class FunctionalTest():
@@ -94,7 +94,7 @@ class FunctionalTest():
         self.secret_message = 'blah blah blah'
 
     def tearDown(self):
-        TearDown.teardown()
+        utils.env.teardown()
         self.driver.quit()
         self.source_process.terminate()
         self.journalist_process.terminate()
