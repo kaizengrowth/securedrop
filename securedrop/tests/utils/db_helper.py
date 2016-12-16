@@ -9,7 +9,7 @@ import os
 os.environ['SECUREDROP_ENV'] = 'test'
 import config
 import crypto_util
-import db_helper
+import db
 import store
 
 
@@ -122,7 +122,7 @@ def mark_downloaded(*submissions):
     db.db_session.commit()
 
 
-def mock_journalist_token(testcase):
+def mock_verify_token(testcase):
     """Patch a :class:`unittest.TestCase` (or derivative class) so TOTP
     token verification always succeeds.
 
