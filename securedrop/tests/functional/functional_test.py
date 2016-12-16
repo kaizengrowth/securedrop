@@ -24,7 +24,7 @@ import config
 import db
 import journalist
 import source
-import tests.utils
+import tests.utils as utils
 
 
 class FunctionalTest():
@@ -54,8 +54,8 @@ class FunctionalTest():
 
         signal.signal(signal.SIGUSR1, lambda _, s: traceback.print_stack(s))
 
-        SetUp.create_directories()
-        self.gpg = SetUp.init_gpg()
+        utils.env.create_directories()
+        self.gpg = utils.env.init_gpg()
         db.init_db()
 
         source_port = self._unused_port()
