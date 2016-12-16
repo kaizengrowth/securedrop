@@ -14,8 +14,6 @@ from flask_testing import TestCase
 # Set environment variable so config.py uses a test environment
 os.environ['SECUREDROP_ENV'] = 'test'
 import config
-# from common import (utils.async, utils.env, utils.env, TestJournalist, TestReply,
-#                     TestSource, TestSubmission)
 import crypto_util
 from db import (db_session, InvalidPasswordLength, Journalist, Reply, Source,
                 Submission)
@@ -38,8 +36,9 @@ class TestJournalistApp(TestCase):
         utils.db_helper.mock_verify_token(self)
 
         # Setup test users: user & admin
-        self.user = utils.db_helper.TestJournalist()
-        self.admin = utils.db_helper.TestJournalist(is_admin=True)
+        self.user, self.user_pw = utils.db_helper.init_journalist()
+        self.admin, self.admin_pw = utils.db_helper.init_journalist(
+            is_admin=True)
 
     def tearDown(self):
         utils.env.teardown()
@@ -59,7 +58,7 @@ class TestJournalistApp(TestCase):
     def test_valid_credentials(self):
         resp = self.client.post(url_for('login'),
                                 data=dict(username=self.user.username,
-                                          password=self.user.pw,
+                                          password=self.user_pw,
                                           token='mocked'),
                                 follow_redirects=True)
         self.assert200(resp) # successful login redirects to index
@@ -69,21 +68,21 @@ class TestJournalistApp(TestCase):
     def test_admin_login_redirects_to_index(self):
         resp = self.client.post(url_for('login'),
                                 data=dict(username=self.admin.username,
-                                          password=self.admin.pw,
+                                          password=self.admin_pw,
                                           token='mocked'))
         self.assertRedirects(resp, url_for('index'))
 
     def test_user_login_redirects_to_index(self):
         resp = self.client.post(url_for('login'),
                                 data=dict(username=self.user.username,
-                                          password=self.user.pw,
+                                          password=self.user_pw,
                                           token='mocked'))
         self.assertRedirects(resp, url_for('index'))
 
     def test_admin_has_link_to_edit_account_page_in_index_page(self):
         resp = self.client.post(url_for('login'),
                                data=dict(username=self.admin.username,
-                                         password=self.admin.pw,
+                                         password=self.admin_pw,
                                          token='mocked'),
                                follow_redirects=True)
         edit_account_link = '<a href="{}">{}</a>'.format(url_for('edit_account'),
@@ -93,7 +92,7 @@ class TestJournalistApp(TestCase):
     def test_user_has_link_to_edit_account_page_in_index_page(self):
         resp = self.client.post(url_for('login'),
                                data=dict(username=self.user.username,
-                                         password=self.user.pw,
+                                         password=self.user_pw,
                                          token='mocked'),
                                follow_redirects=True)
         edit_account_link = '<a href="{}">{}</a>'.format(url_for('edit_account'),
@@ -104,7 +103,7 @@ class TestJournalistApp(TestCase):
     def test_admin_has_link_to_admin_index_page_in_index_page(self):
         resp = self.client.post(url_for('login'),
                                data=dict(username=self.admin.username,
-                                         password=self.admin.pw,
+                                         password=self.admin_pw,
                                          token='mocked'),
                                follow_redirects=True)
         admin_link = '<a href="{}">{}</a>'.format(url_for('admin_index'),
@@ -114,7 +113,7 @@ class TestJournalistApp(TestCase):
     def test_user_lacks_link_to_admin_index_page_in_index_page(self):
         resp = self.client.post(url_for('login'),
                                data=dict(username=self.user.username,
-                                         password=self.user.pw,
+                                         password=self.user_pw,
                                          token='mocked'),
                                follow_redirects=True)
         admin_link = '<a href="{}">{}</a>'.format(url_for('admin_index'),
@@ -164,7 +163,6 @@ class TestJournalistApp(TestCase):
 
         # Assert correct interface behavior
         self.assert200(resp)
-        import pdb; pdb.set_trace()
         self.assertIn(escape("Deleted user '{}'".format(self.user.username)),
                       resp.data)
         # Verify journalist is no longer in the database
@@ -425,9 +423,9 @@ class TestJournalistApp(TestCase):
             self.assertStatus(resp, 302)
 
     def _delete_collection_setup(self):
-        self.source = utils.db_helper.TestSource()
-        self.source.submit(2)
-        self.user.reply(self.source, 2)
+        self.source, _ = utils.db_helper.init_source()
+        utils.db_helper.submit(self.source, 2)
+        utils.db_helper.reply(self.user, self.source, 2)
 
     def test_delete_collection_updates_db(self):
         """Verify that when a source is deleted, their Source identity
@@ -473,8 +471,8 @@ class TestJournalistApp(TestCase):
         self.assertFalse(os.path.exists(dir_source_docs))
 
     def test_download_selected_submissions_from_source(self):
-        source = utils.db_helper.TestSource()
-        submissions = set(TestSubmission.submit(source, 4))
+        source, _ = utils.db_helper.init_source()
+        submissions = set(utils.db_helper.submit(source, 4))
 
         selected_submissions = random.sample(submissions, 2)
         selected_fnames = [submission.filename
@@ -510,15 +508,15 @@ class TestJournalistApp(TestCase):
         """Create a couple sources, make some submissions on their behalf,
         mark some of them as downloaded, and then perform *action* on all
         sources."""
-        self.source0 = utils.db_helper.TestSource()
-        self.source1 = utils.db_helper.TestSource()
-        self.submissions0 = set(TestSubmission.submit(self.source0, 2))
-        self.submissions1 = set(TestSubmission.submit(self.source1, 3))
+        self.source0, _ = utils.db_helper.init_source()
+        self.source1, _ = utils.db_helper.init_source()
+        self.submissions0 = set(utils.db_helper.submit(self.source0, 2))
+        self.submissions1 = set(utils.db_helper.submit(self.source1, 3))
         self.downloaded0 = random.sample(self.submissions0, 1)
-        TestSubmission.mark_downloaded(*self.downloaded0)
+        utils.db_helper.mark_downloaded(*self.downloaded0)
         self.not_downloaded0 = self.submissions0.difference(self.downloaded0)
         self.downloaded1 = random.sample(self.submissions1, 2)
-        TestSubmission.mark_downloaded(*self.downloaded1)
+        utils.db_helper.mark_downloaded(*self.downloaded1)
         self.not_downloaded1 = self.submissions1.difference(self.downloaded1)
 
 
@@ -582,7 +580,7 @@ class TestJournalistApp(TestCase):
                 self.assertTrue(False)
 
     def test_add_star_redirects_to_index(self):
-        source = utils.db_helper.TestSource()
+        source, _ = utils.db_helper.init_source()
         self._login_user()
         resp = self.client.post(url_for('add_star', sid=source.filesystem_id))
         self.assertRedirects(resp, url_for('index'))

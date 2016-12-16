@@ -12,94 +12,136 @@ import crypto_util
 import db
 import store
 
+## db.{Journalist, Reply}
 
-class TestJournalist(db.Journalist):
-    """A wrapper class around :class:`db.Journalist` with extra methods
-    and attributes intended to provide special utility for testing.
+def init_journalist(is_admin=False):
+    """Initialize a journalist into the database. Return their
+    :class:`db.Journalist` object and password string.
+
+    :param bool is_admin: Whether the user is an admin.
+
+    :returns: A 2-tuple. The first entry, an :obj:`db.Journalist`
+              corresponding to the row just added to the database. The
+              second, their password string.
     """
-    def __init__(self, is_admin=False):
-        """Initialize a journalist into the database.
+    username = crypto_util.genrandomid()
+    user_pw = crypto_util.genrandomid()
+    user = db.Journalist(username, user_pw, is_admin)
+    db.db_session.add(user)
+    db.db_session.commit()
+    return user, user_pw
 
-        :param bool is_admin: Whether the user is an admin.
-        """
-        username = crypto_util.genrandomid()
-        self.pw = crypto_util.genrandomid()
-        super(TestJournalist, self).__init__(username, self.pw, is_admin)
-        db.db_session.add(self)
-        db.db_session.commit()
 
-    def reply(self, source, num_replies):
-        """Generates and submits *num_replies* replies to the *source*.
+def reply(journalist, source, num_replies):
+    """Generates and submits *num_replies* replies to *source*
+    from *journalist*. Returns reply objects as a list.
 
-        :param db.Source source: The source to send the replies to.
+    :param db.Journalist journalist: The journalist to write the
+                                     reply from.
 
-        :param int num_replies: Number of random-data replies to make.
+    :param db.Source source: The source to send the reply to.
 
-        :returns: A list of the :class:`db.Reply`s submitted.
-        """
-        assert num_replies >= 1
-        replies = []
-        for _ in range(num_replies):
-            source.interaction_count += 1
-            fname = "{}-{}-reply.gpg".format(source.interaction_count,
-                                             source.journalist_filename)
-            crypto_util.encrypt(str(os.urandom(1)),
-                                [
-                                    crypto_util.getkey(source.filesystem_id),
-                                    config.JOURNALIST_KEY
-                                ],
-                                store.path(source.filesystem_id, fname))
-            reply = db.Reply(self, source, fname)
-            replies.append(reply)
-            db.db_session.add(reply)
+    :param int num_replies: Number of random-data replies to make.
+
+    :returns: A list of the :class:`db.Reply`s submitted.
+    """
+    assert num_replies >= 1
+    replies = []
+    for _ in range(num_replies):
+        source.interaction_count += 1
+        fname = "{}-{}-reply.gpg".format(source.interaction_count,
+                                         source.journalist_filename)
+        crypto_util.encrypt(str(os.urandom(1)),
+                            [
+                                crypto_util.getkey(source.filesystem_id),
+                                config.JOURNALIST_KEY
+                            ],
+                            store.path(source.filesystem_id, fname))
+        reply = db.Reply(journalist, source, fname)
+        replies.append(reply)
+        db.db_session.add(reply)
 
         db.db_session.commit()
         return replies
 
 
-class TestSource(db.Source):
-    """A wrapper class around :class:`db.Source` with extra methods
-    and attributes intended to provide special utility for testing.
+def mock_verify_token(testcase):
+    """Patch a :class:`unittest.TestCase` (or derivative class) so TOTP
+    token verification always succeeds.
+
+    :param unittest.TestCase testcase: The test case for which to patch
+                                       TOTP verification.
     """
-    def __init__(self):
-        """Initialize a source: create their database record, the
-        filesystem directory that stores their submissions & replies,
-        and their GPG key encrypted with their codename.
-        """
-        # Create source identity and database record
-        self.codename = crypto_util.genrandomid()
-        filesystem_id = crypto_util.hash_codename(self.codename)
-        journalist_filename = crypto_util.display_id()
-        super(TestSource, self).__init__(filesystem_id, journalist_filename)
-        db.db_session.add(self)
-        db.db_session.commit()
-        # Create the directory to store their submissions and replies
-        os.mkdir(store.path(self.filesystem_id))
-        # Generate their key, blocking for as long as necessary
-        crypto_util.genkeypair(self.filesystem_id, self.codename)
+    patcher = mock.patch('db.Journalist.verify_token')
+    testcase.addCleanup(patcher.stop)
+    testcase.mock_journalist_verify_token = patcher.start()
+    testcase.mock_journalist_verify_token.return_value = True
 
-    def submit(self, num_submissions):
-        """Generates and submits *num_submissions* random submissions.
 
-        :param int num_submissions: Number of random-data submissions
-                                    to make.
+def mark_downloaded(*submissions):
+    """Mark *submissions* as downloaded in the database.
 
-        :returns: A list of the :class:`db.Submission`s submitted.
-        """
-        assert num_submissions >= 1
-        submissions = []
-        for _ in range(num_submissions):
-            self.interaction_count += 1
-            fpath = store.save_message_submission(self.filesystem_id,
-                                                  self.interaction_count,
-                                                  self.journalist_filename,
-                                                  str(os.urandom(1)))
-            submission = db.Submission(self, fpath)
-            submissions.append(submission)
-            db.db_session.add(submission)
+    :param db.Submission submissions: One or more submissions that
+                                      should be marked as downloaded.
+    """
+    for submission in submissions:
+        submission.downloaded = True
+    db.db_session.commit()
 
-        db.db_session.commit()
-        return submissions
+
+## db.{Source,Submission}
+
+def init_source():
+    """Initialize a source: create their database record, the
+    filesystem directory that stores their submissions & replies,
+    and their GPG key encrypted with their codename. Return a source
+    object and their codename string.
+
+    :returns: A 2-tuple. The first entry, the :class:`db.Source`
+    initialized. The second, their codename string.
+    """
+    # Create source identity and database record
+    codename = crypto_util.genrandomid()
+    filesystem_id = crypto_util.hash_codename(codename)
+    journalist_filename = crypto_util.display_id()
+    source = db.Source(filesystem_id, journalist_filename)
+    db.db_session.add(source)
+    db.db_session.commit()
+    # Create the directory to store their submissions and replies
+    os.mkdir(store.path(source.filesystem_id))
+    # Generate their key, blocking for as long as necessary
+    crypto_util.genkeypair(source.filesystem_id, codename)
+
+    return source, codename
+
+
+def submit(source, num_submissions):
+    """Generates and submits *num_submissions*
+    :class:`db.Submission`s on behalf of a :class:`db.Source`
+    *source*.
+
+    :param db.Source source: The source on who's behalf to make
+                             submissions.
+
+    :param int num_submissions: Number of random-data submissions
+                                to make.
+
+    :returns: A list of the :class:`db.Submission`s submitted.
+    """
+    assert num_submissions >= 1
+    submissions = []
+    for _ in range(num_submissions):
+        source.interaction_count += 1
+        fpath = store.save_message_submission(source.filesystem_id,
+                                              source.interaction_count,
+                                              source.journalist_filename,
+                                              str(os.urandom(1)))
+        submission = db.Submission(source, fpath)
+        submissions.append(submission)
+        db.db_session.add(submission)
+
+    db.db_session.commit()
+    return submissions
 
 
 # NOTE: this method is potentially dangerous to rely on for now due
@@ -114,22 +156,3 @@ def new_codename(client, session):
         codename = session['codename']
         c.post('/create')
     return codename
-
-
-def mark_downloaded(*submissions):
-    for submission in submissions:
-        submission.downloaded = True
-    db.db_session.commit()
-
-
-def mock_verify_token(testcase):
-    """Patch a :class:`unittest.TestCase` (or derivative class) so TOTP
-    token verification always succeeds.
-
-    :param unittest.TestCase testcase: The test case for which to patch
-                                       TOTP verification.
-    """
-    patcher = mock.patch('db.Journalist.verify_token')
-    testcase.addCleanup(patcher.stop)
-    testcase.mock_journalist_verify_token = patcher.start()
-    testcase.mock_journalist_verify_token.return_value = True
